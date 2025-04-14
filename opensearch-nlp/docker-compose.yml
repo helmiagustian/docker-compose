@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  opensearch-plugin-installer:
+    image: opensearchproject/opensearch:2.11.1
+    user: "0"
+    command: >
+      bash -c "
+        /usr/share/opensearch/bin/opensearch-plugin install --batch opensearch-ml &&
+        chown -R opensearch:opensearch /usr/share/opensearch"
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+      - opensearch_plugins:/usr/share/opensearch/plugins
+
+  opensearch:
+    image: opensearchproject/opensearch:2.11.1
+    container_name: opensearch
+    depends_on:
+      - opensearch-plugin-installer
+    environment:
+      - discovery.type=single-node
+      - plugins.security.disabled=true
+      - bootstrap.memory_lock=true
+      - OPENSEARCH_JAVA_OPTS=-Xms2g -Xmx2g
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+      - opensearch_plugins:/usr/share/opensearch/plugins
+
+volumes:
+  opensearch_data:
+  opensearch_plugins:
+ 
